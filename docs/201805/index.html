@@ -1,0 +1,223 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>カフェの店員にクソリプを投げつけるゲーム pixi.js習作</title>
+  <meta name="description" content="カフェの店員にクソリプを投げつけるゲーム pixi.js習作">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta property="og:url" content="https://nabettu.github.io/syusaku/201805/">
+  <meta property="og:image" content="https://nabettu.github.io/syusaku/201805/ogp.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="カフェの店員にクソリプを投げつけるゲーム pixi.js習作">
+  <meta property="og:site_name" content="カフェの店員にクソリプを投げつけるゲーム pixi.js習作">
+  <meta property="og:description" content="カフェの店員にクソリプを投げつけるゲーム pixi.js習作">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="twitter:card" content="summary">
+  <meta property="twitter:title" content="カフェの店員にクソリプを投げつけるゲーム pixi.js習作">
+  <meta property="twitter:description" content="カフェの店員にクソリプを投げつけるゲーム pixi.js習作">
+  <meta property="twitter:image" content="https://nabettu.github.io/syusaku/201805/ogp.png">
+  <link rel="canonical" href="https://nabettu.github.io/syusaku/201805/">
+</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.7.3/pixi.js"></script>
+<style>
+  * {
+    padding: 0;
+    margin: 0
+  }
+  canvas {
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+    transform: translateX(-50%) translateY(-50%);
+  }
+</style>
+
+<body>
+<script type="text/javascript">
+let type = "WebGL";
+if (!PIXI.utils.isWebGLSupported()) {
+  type = "canvas";
+}
+
+const WINSIZE = 800;
+let hitCount = 0;
+//Create a Pixi Appliplayerion
+let app = new PIXI.Application({
+  width: WINSIZE,
+  height: WINSIZE,
+  antialias: true,
+  transparent: false,
+  resolution: 1
+});
+app.renderer.view.style.position = "absolute";
+app.renderer.view.style.display = "block";
+app.renderer.backgroundColor = 0xAAAAAA;
+app.renderer.autoResize = true;
+if (window.innerWidth > window.innerHeight) {
+  //PC
+  app.renderer.view.style.height = "100%";
+  app.renderer.view.style.width = "auto";
+} else {
+  app.renderer.view.style.height = "auto";
+  app.renderer.view.style.width = "100%";
+}
+
+document.body.appendChild(app.view);
+
+const Container = new PIXI.Container();
+// マウス、タッチのイベントを拾えるようにする
+Container.interactive = true;
+// 画面の大きさでrectangleを設定
+Container.hitArea = new PIXI.Rectangle(0, 0, WINSIZE, WINSIZE);
+Container.on("pointerup", onClick);
+
+Container.on("mousedown", onDragStart)
+  .on("touchstart", onDragStart)
+  .on("mouseup", onDragEnd)
+  .on("mouseupoutside", onDragEnd)
+  .on("touchend", onDragEnd)
+  .on("touchendoutside", onDragEnd)
+  .on("mousemove", onDragMove)
+  .on("touchmove", onDragMove);
+
+let dragging = false;
+let exPosition = 0;
+function onDragStart(e) {
+  dragging = true;
+  exPosition = e.data.global.y;
+}
+
+function onDragEnd() {
+  dragging = false;
+}
+
+function onDragMove(e) {
+  if (dragging) {
+    player.y +=
+      (e.data.global.y - exPosition) * (app.view.clientWidth / WINSIZE);
+    if (player.y < 0) {
+      player.y = 0;
+    }
+    if (player.y > WINSIZE - player.height) {
+      player.y = WINSIZE - player.height;
+    }
+    exPosition = e.data.global.y;
+  }
+}
+app.stage.addChild(Container);
+
+PIXI.loader
+  .add("enemy_hit.png")
+  .add("enemy.png")
+  .add("player.png")
+  .add("shell.png")
+  .add("tweet.png")
+  .load(setup);
+
+let player, shell, enemy, tweet, enemyTexture, enemyHitTexture;
+const shellSpeed = 10;
+const enemySpeed = 15;
+let enemyDirection = 1;
+
+function setup() {
+  //Create the player sprite
+  player = new PIXI.Sprite(PIXI.loader.resources["player.png"].texture);
+  player.x = WINSIZE - player.width - 10;
+  player.y = WINSIZE / 2 - player.height / 2;
+
+  shell = new PIXI.Sprite(PIXI.loader.resources["shell.png"].texture);
+  tweet = new PIXI.Sprite(PIXI.loader.resources["tweet.png"].texture);
+  tweet.x = WINSIZE - tweet.width - 10;
+  tweet.y = 10;
+  tweet.interactive = true;
+  tweet.on("mousedown", onTweet)
+    .on("touchstart", onTweet)
+
+  enemyTexture = PIXI.loader.resources["enemy.png"].texture;
+  enemyHitTexture = PIXI.loader.resources["enemy_hit.png"].texture;
+  enemy = new PIXI.Sprite(enemyTexture);
+  enemy.x = 0;
+  enemy.y = WINSIZE / 2 - enemy.height / 2;
+
+  //Add the player to the stage
+  app.stage.addChild(player);
+  app.stage.addChild(tweet);
+  app.stage.addChild(enemy);
+  app.ticker.add(delta => gameLoop(delta));
+
+  setInterval( e => {
+    enemyDirection = Math.random() * 30 - 15;
+  },1000)
+}
+
+function onTweet(){
+  const twurl = 'https://twitter.com/share?url=' + encodeURI("https://nabettu.github.io/syusaku/201805/") + "&text=" + encodeURI("カフェの店員にクソリプを投げつけるゲームで" + hitCount + "回クソリプをぶつけました。")
+  console.log(twurl);
+  window.open(twurl)
+}
+
+function gameLoop(delta) {
+  if (shell.parent) {
+    console.log(shell.y);
+    shell.x -= shellSpeed;
+    if (shell.x < 0) {
+      app.stage.removeChild(shell);
+    }
+
+    if (hitRectangle(enemy, shell) ) {
+      hitCount++;
+      app.stage.removeChild(shell);
+      enemy.texture = enemyHitTexture;
+      setTimeout(e=>{
+        enemy.texture = enemyTexture;
+      }, 1000)
+    }
+  }
+  enemy.y += enemyDirection;
+  if((enemy.y < 0)||(enemy.y > WINSIZE - enemy.height)){
+    enemyDirection *= -1;
+  }
+}
+
+function onClick() {
+  console.log(shell);
+  if (!shell.parent) {
+    shell.x = player.x - player.width / 2;
+    shell.y = player.y + 10;
+    app.stage.addChild(shell);
+    console.log(shell.x);
+  }
+}
+
+function hitRectangle(r1, r2) {
+  let hit, cmbWth, cmbHgh, vx, vy
+  hit = false
+
+  r1.hlfW  = r1.width  / 2
+  r1.hlfH  = r1.height / 2
+  r2.hlfW  = r2.width  / 2
+  r2.hlfH  = r2.height / 2
+
+  r1.cX = r1.x + r1.hlfW;
+  r1.cY = r1.y + r1.hlfH;
+  r2.cX = r2.x + r2.hlfW;
+  r2.cY = r2.y + r2.hlfH;
+
+  vx = r1.cX - r2.cX
+  vy = r1.cY - r2.cY
+
+  cmbWth = r1.hlfW + r2.hlfW;
+  cmbHgh = r1.hlfH + r2.hlfH;
+
+  if ((Math.abs(vx) < cmbWth) && (Math.abs(vy) < cmbHgh)) { hit = true }
+
+ return hit
+}
+</script>
+</body>
+
+</html>

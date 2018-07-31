@@ -33,64 +33,6 @@ function drawResults(canvas, poses, minPartConfidence, minPoseConfidence) {
     }
   });
   setStatusText("");
-  // renderBodyPartsToCanvas(poses, canvas.getContext("2d"));
-}
-
-async function renderBodyPartsToCanvas(poses, ctx) {
-  console.log(JSON.stringify(poses[0].keypoints));
-  const p = poses[0].keypoints;
-  ctx.save();
-  //body
-  const body = await loadImage(body_png);
-  let size = d2p(p[3], p[4]) / 80; // 顔のサイズをもとに
-  let rotate = -r2p(p[3], p[4]) * Math.PI / 180;
-  // console.log(-r2p(p[3], p[4]) * (180 / Math.PI));
-  // ctx.translate(p[0].position.x - 100 * size, p[0].position.y - 100 * size);
-  // // ctx.rotate(rotate);
-  // ctx.drawImage(body, 0, 0, body.width * size, body.height * size);
-  // ctx.translate(
-  //   -(p[0].position.x - 100 * size),
-  //   -(p[0].position.y - 100 * size)
-  // );
-  // // ctx.rotate(-rotate);
-  // ctx.restore();
-  // ctx.save();
-
-  //rightShoulder
-  const rightShoulder = await loadImage(rightShoulder_png);
-  size = d2p(p[6], p[8]) / 100;
-  rotate = r2p(p[6], p[8]) * Math.PI / 180;
-  console.log(-r2p(p[6], p[8]) * (180 / Math.PI));
-  ctx.translate(p[6].position.x, p[6].position.y);
-  ctx.rotate(rotate);
-  ctx.drawImage(
-    rightShoulder,
-    -45 * size,
-    -45 * size,
-    rightShoulder.width * size,
-    rightShoulder.height * size
-  );
-  ctx.rotate(-rotate);
-  ctx.translate(-p[6].position.x, -p[6].position.y);
-  ctx.restore();
-  ctx.save();
-  //right right_arm
-  const rightArm = await loadImage(right_arm_png);
-  size = d2p(p[8], p[10]) / 100;
-  rotate = r2p(p[8], p[10]) * Math.PI / 180;
-  console.log(-r2p(p[8], p[10]) * (180 / Math.PI));
-  ctx.translate(p[8].position.x, p[8].position.y);
-  ctx.rotate(rotate);
-  ctx.translate(-p[8].position.x, -p[8].position.y);
-  ctx.drawImage(
-    rightArm,
-    -30 * size,
-    -30 * size,
-    rightArm.width * size,
-    rightArm.height * size
-  );
-  ctx.rotate(-rotate);
-  ctx.restore();
 }
 
 function drawSinglePoseResults(pose) {

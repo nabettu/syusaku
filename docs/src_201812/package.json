@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "parcel index.html --open --no-source-maps",
     "remove": "rm ../201812/*",
-    "build": "npm run remove | parcel build index.html --out-dir ../201812 --no-source-maps --public-url /syusaku/201807/"
+    "build": "npm run remove | parcel build index.html --out-dir ../201812 --no-source-maps --public-url /syusaku/201812/"
   },
   "author": "",
   "license": "ISC",
